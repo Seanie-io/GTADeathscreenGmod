@@ -1,88 +1,152 @@
--- Fonts for the death screen
-surface.CreateFont("tutorial_24", {
-    font = "Roboto",
-    size = 24,
-    weight = 1000,
+-- Configuration for death screen
+local CONFIG = {
+    fonts = {
+        title = {
+            name = "tutorial_90",
+            font = "Roboto",
+            size = 90,
+            weight = 1000
+        },
+        message = {
+            name = "tutorial_24",
+            font = "Roboto",
+            size = 24,
+            weight = 800
+        }
+    },
+    colors = {
+        wasted = Color(255, 0, 0, 255),
+        message = Color(255, 255, 255, 255)
+    },
+    timings = {
+        respawn_delay = 5, -- Seconds before respawn is allowed
+        fade_duration = 1, -- Seconds for WASTED text fade-in
+        desaturation_rate = 0.15 -- Rate of color desaturation
+    },
+    effects = {
+        fov_multiplier = 0.85, -- Narrower FOV during death
+        brightness = -0.02, -- Slight darkening
+        blur_strength = 2 -- Blur effect intensity
+    }
+}
+
+-- Create fonts
+surface.CreateFont(CONFIG.fonts.title.name, {
+    font = CONFIG.fonts.title.font,
+    size = CONFIG.fonts.title.size,
+    weight = CONFIG.fonts.title.weight
 })
 
-surface.CreateFont("tutorial_90", {
-    font = "Roboto",
-    size = 90,
-    weight = 1000,
+surface.CreateFont(CONFIG.fonts.message.name, {
+    font = CONFIG.fonts.message.font,
+    size = CONFIG.fonts.message.size,
+    weight = CONFIG.fonts.message.weight
 })
 
--- Variables to track death state and visual effects
+-- State variables
 local isDead = false
 local deathTime = 0
 local respawnAllowed = false
+local lastSpacePress = 0
+local screenW, screenH = ScrW(), ScrH()
 
--- Handle receiving the death notification from the server
+-- Handle death notification
 net.Receive("deathscreen_sendDeath", function()
     isDead = true
-    deathTime = CurTime() -- Get the current time when death happens
-    respawnAllowed = false -- Disable respawning initially
+    deathTime = CurTime()
+    respawnAllowed = false
 end)
 
--- Remove the death screen on respawn
+-- Handle respawn notification
 net.Receive("deathscreen_removeDeath", function()
     isDead = false
     respawnAllowed = false
 end)
 
--- Apply screen color modifications for a dramatic death effect
-hook.Add("RenderScreenspaceEffects", "DeathScreenColorMods", function()
-    if isDead then
-        local deathDuration = CurTime() - deathTime
-        local colorMod = {}
-        colorMod["$pp_colour_addr"] = 0
-        colorMod["$pp_colour_addg"] = 0
-        colorMod["$pp_colour_addb"] = 0
-        colorMod["$pp_colour_brightness"] = -0.02 -- Slight darkening effect
-        colorMod["$pp_colour_contrast"] = 1
-        colorMod["$pp_colour_colour"] = math.Clamp(1 - deathDuration * 0.1, 0, 1) -- Slowly desaturate the screen
-        colorMod["$pp_colour_mulr"] = 0
-        colorMod["$pp_colour_mulg"] = 0
-        colorMod["$pp_colour_mulb"] = 0
-        DrawColorModify(colorMod)
-    end
+-- Apply screen effects (color and blur)
+hook.Add("RenderScreenspaceEffects", "DeathScreenEffects", function()
+    if not isDead then return end
+
+    local elapsed = CurTime() - deathTime
+    local colorMod = {
+        ["$pp_colour_addr"] = 0,
+        ["$pp_colour_addg"] = 0,
+        ["$pp_colour_addb"] = 0,
+        ["$pp_colour_brightness"] = CONFIG.effects.brightness,
+        ["$pp_colour_contrast"] = 1,
+        ["$pp_colour_colour"] = math.Clamp(1 - math.pow(elapsed * CONFIG.timings.desaturation_rate, 0.8), 0, 1),
+        ["$pp_colour_mulr"] = 0,
+        ["$pp_colour_mulg"] = 0,
+        ["$pp_colour_mulb"] = 0
+    }
+
+    DrawColorModify(colorMod)
+    DrawMotionBlur(0.4, CONFIG.effects.blur_strength * (elapsed / CONFIG.timings.respawn_delay), 0.01)
 end)
 
--- Draw the GTA style "WASTED" text on screen
+-- Draw death screen UI
 hook.Add("HUDPaint", "DrawDeathScreen", function()
-    if isDead then
-        -- Time passed since death
-        local deathDuration = CurTime() - deathTime
+    if not isDead then return end
 
-        -- Draw WASTED text
-        draw.SimpleText("WASTED", "tutorial_90", ScrW() / 2, ScrH() / 2, Color(255, 0, 0, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    local elapsed = CurTime() - deathTime
+    local fadeAlpha = math.Clamp(elapsed / CONFIG.timings.fade_duration, 0, 1) * 255
+    local respawnTime = math.max(CONFIG.timings.respawn_delay - elapsed, 0)
 
-        -- Countdown message to allow respawn
-        local respawnTime = math.Clamp(5 - deathDuration, 0, 5) -- Countdown from 5 seconds
-        if respawnTime > 0 then
-            draw.SimpleText("Respawn in " .. math.ceil(respawnTime) .. " seconds", "tutorial_24", ScrW() / 2, ScrH() / 2 + 100, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-        else
-            draw.SimpleText("Press [SPACE] to respawn", "tutorial_24", ScrW() / 2, ScrH() / 2 + 100, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-            respawnAllowed = true -- Allow respawn after countdown
-        end
-    end
+    -- Draw WASTED text with fade-in
+    draw.SimpleText(
+        "WASTED",
+        CONFIG.fonts.title.name,
+        screenW / 2,
+        screenH / 2,
+        Color(CONFIG.colors.wasted.r, CONFIG.colors.wasted.g, CONFIG.colors.wasted.b, fadeAlpha),
+        TEXT_ALIGN_CENTER,
+        TEXT_ALIGN_CENTER
+    )
+
+    -- Draw respawn message
+    local message = respawnTime > 0
+        and "Respawn in " .. math.ceil(respawnTime) .. " seconds"
+        or "Press [SPACE] to respawn"
+    if respawnTime <= 0 then respawnAllowed = true end
+
+    draw.SimpleText(
+        message,
+        CONFIG.fonts.message.name,
+        screenW / 2,
+        screenH / 2 + 100,
+        Color(CONFIG.colors.message.r, CONFIG.colors.message.g, CONFIG.colors.message.b, fadeAlpha),
+        TEXT_ALIGN_CENTER,
+        TEXT_ALIGN_CENTER
+    )
 end)
 
--- Check for spacebar press to respawn the player
-hook.Add("Think", "DeathscreenRespawnHandler", function()
-    if isDead and respawnAllowed and input.IsKeyDown(KEY_SPACE) then
-        net.Start("deathscreen_requestRespawn") -- Send a request to the server to respawn the player
-        net.SendToServer()
-        respawnAllowed = false -- Prevent multiple respawns
-    end
+-- Handle respawn input
+hook.Add("Think", "DeathScreenRespawn", function()
+    if not (isDead and respawnAllowed and input.IsKeyDown(KEY_SPACE)) then return end
+
+    local currentTime = CurTime()
+    if currentTime - lastSpacePress < 0.5 then return end -- Debounce input
+
+    net.Start("deathscreen_requestRespawn")
+    net.SendToServer()
+    lastSpacePress = currentTime
+    respawnAllowed = false
 end)
 
--- Camera effect for a slow motion view after death
-hook.Add("CalcView", "DeathscreenCalcView", function(ply, origin, angles, fov, znear, zfar)
-    if isDead then
-        local view = {}
-        view.origin = origin
-        view.angles = angles
-        view.fov = fov * 0.85 -- Narrower field of view
-        return view
-    end
+-- Adjust camera view
+hook.Add("CalcView", "DeathScreenView", function(ply, origin, angles, fov, znear, zfar)
+    if not isDead then return end
+
+    return {
+        origin = origin,
+        angles = angles,
+        fov = fov * CONFIG.effects.fov_multiplier,
+        znear = znear,
+        zfar = zfar
+    }
+end)
+
+-- Update screen dimensions on resolution change
+hook.Add("OnScreenSizeChanged", "DeathScreenUpdateResolution", function()
+    screenW, screenH = ScrW(), ScrH()
 end)
