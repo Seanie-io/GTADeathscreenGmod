@@ -1,11 +1,13 @@
--- Configuration for GTA-styled server-side death screen with customizable sound
+-- Configuration for GTA-styled server-side death screen with custom sound upload
 local CONFIG = {
     network_strings = {
         "deathscreen_sendDeath",
         "deathscreen_removeDeath",
-        "deathscreen_requestRespawn"
+        "deathscreen_requestRespawn",
+        "deathscreen_updateSound",
+        "deathscreen_uploadSound"
     },
-    respawn_delay = 6, -- Matches client-side
+    respawn_delay = 6,
     allow_bypass = function(ply)
         return ply:IsSuperAdmin() or ply:HasGodMode()
     end,
@@ -16,7 +18,10 @@ local CONFIG = {
             { name = "Deep Tone", file = "gta/deep_tone.mp3" },
             { name = "Retro Beep", file = "gta/retro_beep.mp3" }
         },
-        default_death = "gta/wasted.mp3"
+        default_death = "gta/wasted.mp3",
+        custom_upload_path = "gta/custom_sounds/",
+        max_file_size = 5242880, -- 5MB limit
+        allowed_extensions = { "mp3", "wav" }
     },
     languages = {
         { code = "en", name = "English", translations = { sound = "Death Sound" } },
@@ -50,7 +55,16 @@ end
 -- Track player states
 local playerData = {}
 
--- PreventHannah
+-- Validate uploaded sound file
+local function ValidateSoundFile(fileName, fileSize)
+    if fileSize > CONFIG.sounds.max_file_size then return false end
+    local ext = string.lower(string.GetExtensionFromFilename(fileName))
+    for _, allowed in ipairs(CONFIG.sounds.allowed_extensions) do
+        if ext == allowed then return true end
+    end
+    return false
+end
+
 -- Prevent default respawn
 hook.Add("PlayerDeathThink", "DeathScreenNoRespawn", function(ply)
     return false
@@ -109,8 +123,37 @@ net.Receive("deathscreen_updateSound", function(len, ply)
         if sound.file == soundFile then
             playerData[ply] = playerData[ply] or {}
             playerData[ply].selectedSound = soundFile
-            break
+            return
         end
+    end
+    -- Check if it's a custom sound
+    if string.find(soundFile, CONFIG.sounds.custom_upload_path) then
+        playerData[ply] = playerData[ply] or {}
+        playerData[ply].selectedSound = soundFile
+    end
+end)
+
+-- Handle custom sound upload
+net.Receive("deathscreen_uploadSound", function(len, ply)
+    local fileName = net.ReadString()
+    local fileData = net.ReadData(len / 8)
+    local fileSize = #fileData
+
+    if ValidateSoundFile(fileName, fileSize) then
+        local soundPath = CONFIG.sounds.custom_upload_path .. ply:SteamID64() .. "_" .. fileName
+        file.Write(soundPath, fileData)
+        playerData[ply] = playerData[ply] or {}
+        playerData[ply].selectedSound = soundPath
+        -- Notify client of successful upload
+        net.Start("deathscreen_uploadSound")
+        net.WriteBool(true)
+        net.WriteString(soundPath)
+        net.Send(ply)
+    else
+        -- Notify client of failed upload
+        net.Start("deathscreen_uploadSound")
+        net.WriteBool(false)
+        net.Send(ply)
     end
 end)
 
