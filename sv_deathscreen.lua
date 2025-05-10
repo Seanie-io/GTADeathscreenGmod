@@ -1,14 +1,15 @@
--- Configuration for server-side death screen
+-- Configuration for GTA-styled server-side death screen
 local CONFIG = {
     network_strings = {
         "deathscreen_sendDeath",
         "deathscreen_removeDeath",
         "deathscreen_requestRespawn"
     },
-    respawn_delay = 10, -- Seconds before respawn is allowed
-    allow_bypass = function(ply) -- Function to check if player can bypass respawn delay
-        return ply:IsSuperAdmin()
-    end
+    respawn_delay = 6, -- Matches client-side for GTA realism
+    allow_bypass = function(ply)
+        return ply:IsSuperAdmin() or ply:HasGodMode()
+    end,
+    sound = "gta/wasted.mp3" -- GTA-style sound
 }
 
 -- Register network strings
@@ -16,47 +17,60 @@ for _, netstr in ipairs(CONFIG.network_strings) do
     util.AddNetworkString(netstr)
 end
 
--- Track player death times
-local playerDeathTimes = {}
+-- Track player states
+local playerData = {}
 
--- Prevent default respawn behavior
+-- Prevent default respawn
 hook.Add("PlayerDeathThink", "DeathScreenNoRespawn", function(ply)
-    return false -- Block normal respawn
+    return false
 end)
 
--- Trigger death screen on player death
+-- Handle player death
 hook.Add("PlayerDeath", "DeathScreenHandleDeath", function(victim, inflictor, attacker)
     if not IsValid(victim) then return end
 
-    playerDeathTimes[victim] = CurTime()
+    playerData[victim] = {
+        deathTime = CurTime(),
+        canRespawn = false
+    }
+
+    -- Send death notification and play GTA sound
     net.Start("deathscreen_sendDeath")
     net.Send(victim)
+    victim:EmitSound(CONFIG.sound, 75, 100, 1)
 end)
 
--- Remove death screen on player spawn
+-- Handle player spawn
 hook.Add("PlayerSpawn", "DeathScreenRemove", function(ply)
     if not IsValid(ply) then return end
 
-    playerDeathTimes[ply] = nil
-    net.Start("deathscreen_removeDeath")
-    net.Send(ply)
+    if playerData[ply] then
+        net.Start("deathscreen_removeDeath")
+        net.Send(ply)
+        playerData[ply] = nil
+    end
 end)
 
--- Disable default death sound
+-- Suppress default death sound
 hook.Add("PlayerDeathSound", "DeathScreenNoSound", function()
-    return true -- Suppress default sound
+    return true
 end)
 
--- Handle client respawn requests
+-- Handle respawn requests
 net.Receive("deathscreen_requestRespawn", function(len, ply)
     if not IsValid(ply) or ply:Alive() then return end
 
-    local deathTime = playerDeathTimes[ply]
-    if not deathTime then return end
+    local data = playerData[ply]
+    if not data then return end
 
-    -- Allow bypass for authorized players or after delay
-    if CONFIG.allow_bypass(ply) or (CurTime() - deathTime >= CONFIG.respawn_delay) then
+    local elapsed = CurTime() - data.deathTime
+    if CONFIG.allow_bypass(ply) or elapsed >= CONFIG.respawn_delay then
         ply:Spawn()
-        playerDeathTimes[ply] = nil
+        playerData[ply] = nil
     end
+end)
+
+-- Cleanup on disconnect
+hook.Add("PlayerDisconnected", "DeathScreenCleanup", function(ply)
+    playerData[ply] = nil
 end)
