@@ -98,7 +98,7 @@ end
 -- Get translation for current language, fallback to English
 local function GetTranslation(key)
     local code = state.selectedLanguage
-    print(code)
+
     if code == "default" then
         code = GetConVarString("gmod_language")
     end
