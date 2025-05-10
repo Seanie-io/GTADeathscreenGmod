@@ -1,4 +1,4 @@
--- Configuration for GTA-styled server-side death screen
+-- Configuration for GTA-styled server-side death screen with customizable sound
 local CONFIG = {
     network_strings = {
         "deathscreen_sendDeath",
@@ -9,7 +9,37 @@ local CONFIG = {
     allow_bypass = function(ply)
         return ply:IsSuperAdmin() or ply:HasGodMode()
     end,
-    sound = "gta/wasted.mp3"
+    sounds = {
+        death_options = {
+            { name = "Classic GTA", file = "gta/wasted.mp3" },
+            { name = "Soft Chime", file = "gta/soft_chime.mp3" },
+            { name = "Deep Tone", file = "gta/deep_tone.mp3" },
+            { name = "Retro Beep", file = "gta/retro_beep.mp3" }
+        },
+        default_death = "gta/wasted.mp3"
+    },
+    languages = {
+        { code = "en", name = "English", translations = { sound = "Death Sound" } },
+        { code = "es", name = "Español", translations = { sound = "Sonido de Muerte" } },
+        { code = "fr", name = "Français", translations = { sound = "Son de Mort" } },
+        { code = "da", name = "Dansk", translations = { sound = "Dødssound" } },
+        { code = "it", name = "Italiano", translations = { sound = "Suono di Morte" } },
+        { code = "bg", name = "Български", translations = { sound = "Звук на Смърт" } },
+        { code = "zh", name = "中文", translations = { sound = "死亡音效" } },
+        { code = "ar", name = "العربية", translations = { sound = "صوت الموت" } },
+        { code = "de", name = "Deutsch", translations = { sound = "Todessound" } },
+        { code = "ru", name = "Русский", translations = { sound = "Звук смерти" } },
+        { code = "pt", name = "Português", translations = { sound = "Som de Morte" } },
+        { code = "ja", name = "日本語", translations = { sound = "死亡音" } },
+        { code = "ko", name = "한국어", translations = { sound = "사망 소리" } },
+        { code = "pl", name = "Polski", translations = { sound = "Dźwięk Śmierci" } },
+        { code = "tr", name = "Türkçe", translations = { sound = "Ölüm Sesi" } },
+        { code = "nl", name = "Nederlands", translations = { sound = "Doodsgeluid" } },
+        { code = "sv", name = "Svenska", translations = { sound = "Dödsljud" } },
+        { code = "fi", name = "Suomi", translations = { sound = "Kuoleman Ääni" } },
+        { code = "cs", name = "Čeština", translations = { sound = "Zvuk Smrti" } },
+        { code = "hu", name = "Magyar", translations = { sound = "Halál Hang" } }
+    }
 }
 
 -- Register network strings
@@ -20,6 +50,7 @@ end
 -- Track player states
 local playerData = {}
 
+-- PreventHannah
 -- Prevent default respawn
 hook.Add("PlayerDeathThink", "DeathScreenNoRespawn", function(ply)
     return false
@@ -29,15 +60,16 @@ end)
 hook.Add("PlayerDeath", "DeathScreenHandleDeath", function(victim, inflictor, attacker)
     if not IsValid(victim) then return end
 
-    playerData[victim] = {
-        deathTime = CurTime(),
-        canRespawn = false
-    }
+    local selectedSound = playerData[victim] and playerData[victim].selectedSound or CONFIG.sounds.default_death
 
-    -- Send death notification and play GTA sound
+    playerData[victim] = playerData[victim] or {}
+    playerData[victim].deathTime = CurTime()
+    playerData[victim].canRespawn = false
+
+    -- Send death notification and play selected sound
     net.Start("deathscreen_sendDeath")
     net.Send(victim)
-    victim:EmitSound(CONFIG.sound, 75, 100, 1)
+    victim:EmitSound(selectedSound, 75, 100, 1)
 end)
 
 -- Handle player spawn
@@ -67,6 +99,18 @@ net.Receive("deathscreen_requestRespawn", function(len, ply)
     if CONFIG.allow_bypass(ply) or elapsed >= CONFIG.respawn_delay then
         ply:Spawn()
         playerData[ply] = nil
+    end
+end)
+
+-- Update player sound selection
+net.Receive("deathscreen_updateSound", function(len, ply)
+    local soundFile = net.ReadString()
+    for _, sound in ipairs(CONFIG.sounds.death_options) do
+        if sound.file == soundFile then
+            playerData[ply] = playerData[ply] or {}
+            playerData[ply].selectedSound = soundFile
+            break
+        end
     end
 end)
 
