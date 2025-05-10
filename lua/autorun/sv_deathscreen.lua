@@ -1,6 +1,6 @@
 if not SERVER then return end
 
--- Configuration for GTA-styled server-side death screen with custom sound upload
+-- Configuration for GTA-styled server-side death screen with custom sound upload and kill details
 local CONFIG = {
     network_strings = {
         "deathscreen_sendDeath",
@@ -60,11 +60,25 @@ local playerData = {}
 -- Validate uploaded sound file
 local function ValidateSoundFile(fileName, fileSize)
     if fileSize > CONFIG.sounds.max_file_size then return false end
-    local ext = string.lower(string.GetExtensionFromFilename(fileName))
-    for _, allowed in ipairs(CONFIG.sounds.allowed_extensions) do
-        if ext == allowed then return true end
+    local ext = string.lower(string.GetExtensionFromFilename(fileName) or "")
+    return table.HasValue(CONFIG.sounds.allowed_extensions, ext)
+end
+
+-- Determine kill type based on damage info
+local function GetKillType(dmgInfo)
+    if not dmgInfo then return "Unknown" end
+    local hitgroup = dmgInfo:GetHitGroup()
+    if hitgroup == HITGROUP_HEAD then
+        return "Headshot"
+    elseif hitgroup == HITGROUP_CHEST or hitgroup == HITGROUP_STOMACH then
+        return "Bodyshot"
+    elseif hitgroup == HITGROUP_LEFTARM or hitgroup == HITGROUP_RIGHTARM then
+        return "Armshot"
+    elseif hitgroup == HITGROUP_LEFTLEG or hitgroup == HITGROUP_RIGHTLEG then
+        return "Legshot"
+    else
+        return "Unknown"
     end
-    return false
 end
 
 -- Prevent default respawn
@@ -73,30 +87,34 @@ hook.Add("PlayerDeathThink", "DeathScreenNoRespawn", function(ply)
 end)
 
 -- Handle player death
-hook.Add("PlayerDeath", "DeathScreenHandleDeath", function(victim, inflictor, attacker)
+hook.Add("PlayerDeath", "DeathScreenHandleDeath", function(victim, inflictor, attacker, dmgInfo)
     if not IsValid(victim) then return end
 
     local selectedSound = playerData[victim] and playerData[victim].selectedSound or CONFIG.sounds.default_death
+    local killerName = IsValid(attacker) and attacker:IsPlayer() and attacker:Nick() or "Unknown"
+    local weaponName = IsValid(inflictor) and inflictor.GetClass and inflictor:GetClass() or "Unknown"
+    local killType = GetKillType(dmgInfo)
 
     playerData[victim] = playerData[victim] or {}
     playerData[victim].deathTime = CurTime()
     playerData[victim].canRespawn = false
 
-    -- Send death notification and play selected sound
+    -- Send death notification with kill details
     net.Start("deathscreen_sendDeath")
+    net.WriteString(killerName)
+    net.WriteString(weaponName)
+    net.WriteString(killType)
     net.Send(victim)
     victim:EmitSound(selectedSound, 75, 100, 1)
 end)
 
 -- Handle player spawn
 hook.Add("PlayerSpawn", "DeathScreenRemove", function(ply)
-    if not IsValid(ply) then return end
+    if not IsValid(ply) or not playerData[ply] then return end
 
-    if playerData[ply] then
-        net.Start("deathscreen_removeDeath")
-        net.Send(ply)
-        playerData[ply] = nil
-    end
+    net.Start("deathscreen_removeDeath")
+    net.Send(ply)
+    playerData[ply] = nil
 end)
 
 -- Suppress default death sound
@@ -106,12 +124,9 @@ end)
 
 -- Handle respawn requests
 net.Receive("deathscreen_requestRespawn", function(len, ply)
-    if not IsValid(ply) or ply:Alive() then return end
+    if not IsValid(ply) or ply:Alive() or not playerData[ply] then return end
 
-    local data = playerData[ply]
-    if not data then return end
-
-    local elapsed = CurTime() - data.deathTime
+    local elapsed = CurTime() - playerData[ply].deathTime
     if CONFIG.allow_bypass(ply) or elapsed >= CONFIG.respawn_delay then
         ply:Spawn()
         playerData[ply] = nil
@@ -121,15 +136,9 @@ end)
 -- Update player sound selection
 net.Receive("deathscreen_updateSound", function(len, ply)
     local soundFile = net.ReadString()
-    for _, sound in ipairs(CONFIG.sounds.death_options) do
-        if sound.file == soundFile then
-            playerData[ply] = playerData[ply] or {}
-            playerData[ply].selectedSound = soundFile
-            return
-        end
-    end
-    -- Check if it's a custom sound
-    if string.find(soundFile, CONFIG.sounds.custom_upload_path) then
+    local isValidSound = table.HasValue(CONFIG.sounds.death_options, function(sound) return sound.file == soundFile end) or
+                        string.find(soundFile, CONFIG.sounds.custom_upload_path, 1, true)
+    if isValidSound then
         playerData[ply] = playerData[ply] or {}
         playerData[ply].selectedSound = soundFile
     end
@@ -146,13 +155,11 @@ net.Receive("deathscreen_uploadSound", function(len, ply)
         file.Write(soundPath, fileData)
         playerData[ply] = playerData[ply] or {}
         playerData[ply].selectedSound = soundPath
-        -- Notify client of successful upload
         net.Start("deathscreen_uploadSound")
         net.WriteBool(true)
         net.WriteString(soundPath)
         net.Send(ply)
     else
-        -- Notify client of failed upload
         net.Start("deathscreen_uploadSound")
         net.WriteBool(false)
         net.Send(ply)
