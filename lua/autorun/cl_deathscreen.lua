@@ -2,19 +2,21 @@ if not CLIENT then return end
 
 CreateClientConVar("seanie_deathscreen_language", "default", true, false)
 
--- Configuration for GTA-styled death screen with expanded multilingual support and custom death sound upload
+-- Configuration for GTA-styled death screen with expanded multilingual support, custom death sound upload, and kill details
 local CONFIG = {
     fonts = {
         title = { name = "gta_title", font = "Pricedown", size = 100, weight = 1000 },
         message = { name = "gta_message", font = "Arial", size = 28, weight = 700 },
-        settings = { name = "gta_settings", font = "Arial", size = 24, weight = 600 }
+        settings = { name = "gta_settings", font = "Arial", size = 24, weight = 600 },
+        kill_info = { name = "gta_kill_info", font = "Arial", size = 26, weight = 600 }
     },
     colors = {
         wasted = Color(200, 0, 0, 255),
         message = Color(220, 220, 220, 255),
         settings = Color(255, 255, 255, 255),
         settings_hover = Color(255, 215, 0, 255),
-        background = Color(20, 20, 20, 240)
+        background = Color(20, 20, 20, 240),
+        kill_info = Color(255, 255, 255, 255)
     },
     timings = {
         respawn_delay = 6,
@@ -39,26 +41,26 @@ local CONFIG = {
         allowed_extensions = { "mp3", "wav" }
     },
     languages = {
-        { code = "en", name = "English", translations = { wasted = "WASTED", respawn = "Respawn in %d seconds", press = "Press [SPACE] to respawn", settings = "Settings", language = "Language", close = "Close", sound = "Death Sound", upload = "Upload Custom Sound", upload_error = "Invalid file! Use MP3/WAV, max 5MB." } },
-        { code = "es", name = "Español", translations = { wasted = "LIQUIDADO", respawn = "Reaparecer en %d segundos", press = "Presiona [ESPACIO] para reaparecer", settings = "Configuración", language = "Idioma", close = "Cerrar", sound = "Sonido de Muerte", upload = "Subir Sonido Personalizado", upload_error = "¡Archivo inválido! Usa MP3/WAV, máximo 5MB." } },
-        { code = "fr", name = "Français", translations = { wasted = "ÉLIMINÉ", respawn = "Réapparaître dans %d secondes", press = "Appuie sur [ESPACE] pour réapparaître", settings = "Paramètres", language = "Langue", close = "Fermer", sound = "Son de Mort", upload = "Télécharger Son Personnalisé", upload_error = "Fichier invalide ! Utilisez MP3/WAV, max 5MB." } },
-        { code = "da", name = "Dansk", translations = { wasted = "UDSLETTET", respawn = "Genopstå om %d sekunder", press = "Tryk på [MELLUMSLAG] for at genopstå", settings = "Indstillinger", language = "Sprog", close = "Luk", sound = "Dødssound", upload = "Upload Brugerdefineret Lyd", upload_error = "Ugyldig fil! Brug MP3/WAV, max 5MB." } },
-        { code = "it", name = "Italiano", translations = { wasted = "ELIMINATO", respawn = "Riapparire tra %d secondi", press = "Premi [SPAZIO] per riapparire", settings = "Impostazioni", language = "Lingua", close = "Chiudi", sound = "Suono di Morte", upload = "Carica Suono Personalizzato", upload_error = "File non valido! Usa MP3/WAV, max 5MB." } },
-        { code = "bg", name = "Български", translations = { wasted = "УБИТ", respawn = "Възкръсване след %d секунди", press = "Натисни [ИНТЕРВАЛ] за възкръсване", settings = "Настройки", language = "Език", close = "Затвори", sound = "Звук на Смърт", upload = "Качи Персонализиран Звук", upload_error = "Невалиден файл! Използвай MP3/WAV, макс. 5MB." } },
-        { code = "zh", name = "中文", translations = { wasted = "死亡", respawn = "%d秒后重生", press = "按[空格]重生", settings = "设置", language = "语言", close = "关闭", sound = "死亡音效", upload = "上传自定义音效", upload_error = "无效文件！使用MP3/WAV，最大5MB。" } },
-        { code = "ar", name = "العربية", translations = { wasted = "قتل", respawn = "إعادة الظهور بعد %d ثانية", press = "اضغط [المسافة] لإعادة الظهور", settings = "الإعدادات", language = "اللغة", close = "إغلاق", sound = "صوت الموت", upload = "تحميل صوت مخصص", upload_error = "ملف غير صالح! استخدم MP3/WAV، الحد الأقصى 5MB." } },
-        { code = "de", name = "Deutsch", translations = { wasted = "ERLEDIGT", respawn = "In %d Sekunden wiederbeleben", press = "Drücke [LEERTASTE] zum Wiederbeleben", settings = "Einstellungen", language = "Sprache", close = "Schließen", sound = "Todessound", upload = "Benutzerdefinierten Sound Hochladen", upload_error = "Ungültige Datei! Verwende MP3/WAV, max. 5MB." } },
-        { code = "ru", name = "Русский", translations = { wasted = "УБИТ", respawn = "Возрождение через %d секунд", press = "Нажми [ПРОБЕЛ] для возрождения", settings = "Настройки", language = "Язык", close = "Закрыть", sound = "Звук смерти", upload = "Загрузить Пользовательский Звук", upload_error = "Недопустимый файл! Используйте MP3/WAV, макс. 5MB." } },
-        { code = "pt", name = "Português", translations = { wasted = "ELIMINADO", respawn = "Ressurgir em %d segundos", press = "Pressione [ESPAÇO] para ressurgir", settings = "Configurações", language = "Idioma", close = "Fechar", sound = "Som de Morte", upload = "Carregar Som Personalizado", upload_error = "Arquivo inválido! Use MP3/WAV, máx. 5MB." } },
-        { code = "ja", name = "日本語", translations = { wasted = "死亡", respawn = "%d秒後にリスポーン", press = "[スペース]を押してリスポーン", settings = "設定", language = "言語", close = "閉じる", sound = "死亡音", upload = "カスタムサウンドをアップロード", upload_error = "無効なファイル！MP3/WAVを使用、最大5MB。" } },
-        { code = "ko", name = "한국어", translations = { wasted = "사망", respawn = "%d초 후 부활", press = "[스페이스]를 눌러 부활", settings = "설정", language = "언어", close = "닫기", sound = "사망 소리", upload = "사용자 정의 사운드 업로드", upload_error = "잘못된 파일! MP3/WAV 사용, 최대 5MB." } },
-        { code = "pl", name = "Polski", translations = { wasted = "ZABITY", respawn = "Odrodzenie za %d sekund", press = "Naciśnij [SPACJA] aby odrodzić", settings = "Ustawienia", language = "Język", close = "Zamknij", sound = "Dźwięk Śmierci", upload = "Prześlij Niestandardowy Dźwięk", upload_error = "Nieprawidłowy plik! Użyj MP3/WAV, maks. 5MB." } },
-        { code = "tr", name = "Türkçe", translations = { wasted = "ÖLDÜRÜLDÜ", respawn = "%d saniye içinde yeniden doğ", press = "Yeniden doğmak için [BOŞLUK] tuşuna bas", settings = "Ayarlar", language = "Dil", close = "Kapat", sound = "Ölüm Sesi", upload = "Özel Ses Yükle", upload_error = "Geçersiz dosya! MP3/WAV kullan, maks. 5MB." } },
-        { code = "nl", name = "Nederlands", translations = { wasted = "VERNIETIGD", respawn = "Herleven in %d seconden", press = "Druk op [SPATIE] om te herleven", settings = "Instellingen", language = "Taal", close = "Sluiten", sound = "Doodsgeluid", upload = "Aangepast Geluid Uploaden", upload_error = "Ongeldig bestand! Gebruik MP3/WAV, max. 5MB." } },
-        { code = "sv", name = "Svenska", translations = { wasted = "UTSLAGEN", respawn = "Återuppstå om %d sekunder", press = "Tryck på [MELLANSLAG] för att återuppstå", settings = "Inställningar", language = "Språk", close = "Stäng", sound = "Dödsljud", upload = "Ladda Upp Anpassat Ljud", upload_error = "Ogiltig fil! Använd MP3/WAV, max 5MB." } },
-        { code = "fi", name = "Suomi", translations = { wasted = "KUOLLUT", respawn = "Uudelleensyntyminen %d sekunnin kuluttua", press = "Paina [VÄLILYÖNTI] uudelleensyntyäksesi", settings = "Asetukset", language = "Kieli", close = "Sulje", sound = "Kuoleman Ääni", upload = "Lataa Mukautettu Ääni", upload_error = "Virheellinen tiedosto! Käytä MP3/WAV, enintään 5MB." } },
-        { code = "cs", name = "Čeština", translations = { wasted = "ZABIT", respawn = "Obnovení za %d sekund", press = "Stiskni [MEZERNÍK] pro obnovení", settings = "Nastavení", language = "Jazyk", close = "Zavřít", sound = "Zvuk Smrti", upload = "Nahrát Vlastní Zvuk", upload_error = "Neplatný soubor! Použij MP3/WAV, max. 5MB." } },
-        { code = "hu", name = "Magyar", translations = { wasted = "MEGÖLVE", respawn = "Újraéledés %d másodperc múlva", press = "Nyomd meg a [SZÓKÖZ] gombot az újraéledéshez", settings = "Beállítások", language = "Nyelv", close = "Bezárás", sound = "Halál Hang", upload = "Egyéni Hang Feltöltése", upload_error = "Érvénytelen fájl! Használj MP3/WAV formátumot, max. 5MB." } }
+        { code = "en", name = "English", translations = { wasted = "WASTED", respawn = "Respawn in %d seconds", press = "Press [SPACE] to respawn", settings = "Settings", language = "Language", close = "Close", sound = "Death Sound", upload = "Upload Custom Sound", upload_error = "Invalid file! Use MP3/WAV, max 5MB.", killed_by = "Killed by %s with %s (%s)" } },
+        { code = "es", name = "Español", translations = { wasted = "LIQUIDADO", respawn = "Reaparecer en %d segundos", press = "Presiona [ESPACIO] para reaparecer", settings = "Configuración", language = "Idioma", close = "Cerrar", sound = "Sonido de Muerte", upload = "Subir Sonido Personalizado", upload_error = "¡Archivo inválido! Usa MP3/WAV, máximo 5MB.", killed_by = "Asesinado por %s con %s (%s)" } },
+        { code = "fr", name = "Français", translations = { wasted = "ÉLIMINÉ", respawn = "Réapparaître dans %d secondes", press = "Appuie sur [ESPACE] pour réapparaître", settings = "Paramètres", language = "Langue", close = "Fermer", sound = "Son de Mort", upload = "Télécharger Son Personnalisé", upload_error = "Fichier invalide ! Utilisez MP3/WAV, max 5MB.", killed_by = "Tué par %s avec %s (%s)" } },
+        { code = "da", name = "Dansk", translations = { wasted = "UDSLETTET", respawn = "Genopstå om %d sekunder", press = "Tryk på [MELLUMSLAG] for at genopstå", settings = "Indstillinger", language = "Sprog", close = "Luk", sound = "Dødssound", upload = "Upload Brugerdefineret Lyd", upload_error = "Ugyldig fil! Brug MP3/WAV, max 5MB.", killed_by = "Dræbt af %s med %s (%s)" } },
+        { code = "it", name = "Italiano", translations = { wasted = "ELIMINATO", respawn = "Riapparire tra %d secondi", press = "Premi [SPAZIO] per riapparire", settings = "Impostazioni", language = "Lingua", close = "Chiudi", sound = "Suono di Morte", upload = "Carica Suono Personalizzato", upload_error = "File non valido! Usa MP3/WAV, max 5MB.", killed_by = "Ucciso da %s con %s (%s)" } },
+        { code = "bg", name = "Български", translations = { wasted = "УБИТ", respawn = "Възкръсване след %d секунди", press = "Натисни [ИНТЕРВАЛ] за възкръсване", settings = "Настройки", language = "Език", close = "Затвори", sound = "Звук на Смърт", upload = "Качи Персонализиран Звук", upload_error = "Невалиден файл! Използвай MP3/WAV, макс. 5MB.", killed_by = "Убит от %s с %s (%s)" } },
+        { code = "zh", name = "中文", translations = { wasted = "死亡", respawn = "%d秒后重生", press = "按[空格]重生", settings = "设置", language = "语言", close = "关闭", sound = "死亡音效", upload = "上传自定义音效", upload_error = "无效文件！使用MP3/WAV，最大5MB。", killed_by = "被%s用%s杀死 (%s)" } },
+        { code = "ar", name = "العربية", translations = { wasted = "قتل", respawn = "إعادة الظهور بعد %d ثانية", press = "اضغط [المسافة] لإعادة الظهور", settings = "الإعدادات", language = "اللغة", close = "إغلاق", sound = "صوت الموت", upload = "تحميل صوت مخصص", upload_error = "ملف غير صالح! استخدم MP3/WAV، الحد الأقصى 5MB.", killed_by = "قتلك %s بـ%s (%s)" } },
+        { code = "de", name = "Deutsch", translations = { wasted = "ERLEDIGT", respawn = "In %d Sekunden wiederbeleben", press = "Drücke [LEERTASTE] zum Wiederbeleben", settings = "Einstellungen", language = "Sprache", close = "Schließen", sound = "Todessound", upload = "Benutzerdefinierten Sound Hochladen", upload_error = "Ungültige Datei! Verwende MP3/WAV, max. 5MB.", killed_by = "Getötet von %s mit %s (%s)" } },
+        { code = "ru", name = "Русский", translations = { wasted = "УБИТ", respawn = "Возрождение через %d секунд", press = "Нажми [ПРОБЕЛ] для возрождения", settings = "Настройки", language = "Язык", close = "Закрыть", sound = "Звук смерти", upload = "Загрузить Пользовательский Звук", upload_error = "Недопустимый файл! Используйте MP3/WAV, макс. 5MB.", killed_by = "Убит %s с помощью %s (%s)" } },
+        { code = "pt", name = "Português", translations = { wasted = "ELIMINADO", respawn = "Ressurgir em %d segundos", press = "Pressione [ESPAÇO] para ressurgir", settings = "Configurações", language = "Idioma", close = "Fechar", sound = "Som de Morte", upload = "Carregar Som Personalizado", upload_error = "Arquivo inválido! Use MP3/WAV, máx. 5MB.", killed_by = "Morto por %s com %s (%s)" } },
+        { code = "ja", name = "日本語", translations = { wasted = "死亡", respawn = "%d秒後にリスポーン", press = "[スペース]を押してリスポーン", settings = "設定", language = "言語", close = "閉じる", sound = "死亡音", upload = "カスタムサウンドをアップロード", upload_error = "無効なファイル！MP3/WAVを使用、最大5MB。", killed_by = "%sに%sで殺された (%s)" } },
+        { code = "ko", name = "한국어", translations = { wasted = "사망", respawn = "%d초 후 부활", press = "[스페이스]를 눌러 부활", settings = "설정", language = "언어", close = "닫기", sound = "사망 소리", upload = "사용자 정의 사운드 업로드", upload_error = "잘못된 파일! MP3/WAV 사용, 최대 5MB.", killed_by = "%s에게 %s로 사망 (%s)" } },
+        { code = "pl", name = "Polski", translations = { wasted = "ZABITY", respawn = "Odrodzenie za %d sekund", press = "Naciśnij [SPACJA] aby odrodzić", settings = "Ustawienia", language = "Język", close = "Zamknij", sound = "Dźwięk Śmierci", upload = "Prześlij Niestandardowy Dźwięk", upload_error = "Nieprawidłowy plik! Użyj MP3/WAV, maks. 5MB.", killed_by = "Zabity przez %s za pomocą %s (%s)" } },
+        { code = "tr", name = "Türkçe", translations = { wasted = "ÖLDÜRÜLDÜ", respawn = "%d saniye içinde yeniden doğ", press = "Yeniden doğmak için [BOŞLUK] tuşuna bas", settings = "Ayarlar", language = "Dil", close = "Kapat", sound = "Ölüm Sesi", upload = "Özel Ses Yükle", upload_error = "Geçersiz dosya! MP3/WAV kullan, maks. 5MB.", killed_by = "%s tarafından %s ile öldürüldü (%s)" } },
+        { code = "nl", name = "Nederlands", translations = { wasted = "VERNIETIGD", respawn = "Herleven in %d seconden", press = "Druk op [SPATIE] om te herleven", settings = "Instellingen", language = "Taal", close = "Sluiten", sound = "Doodsgeluid", upload = "Aangepast Geluid Uploaden", upload_error = "Ongeldig bestand! Gebruik MP3/WAV, max. 5MB.", killed_by = "Gedood door %s met %s (%s)" } },
+        { code = "sv", name = "Svenska", translations = { wasted = "UTSLAGEN", respawn = "Återuppstå om %d sekunder", press = "Tryck på [MELLANSLAG] för att återuppstå", settings = "Inställningar", language = "Språk", close = "Stäng", sound = "Dödsljud", upload = "Ladda Upp Anpassat Ljud", upload_error = "Ogiltig fil! Använd MP3/WAV, max 5MB.", killed_by = "Dödad av %s med %s (%s)" } },
+        { code = "fi", name = "Suomi", translations = { wasted = "KUOLLUT", respawn = "Uudelleensyntyminen %d sekunnin kuluttua", press = "Paina [VÄLILYÖNTI] uudelleensyntyäksesi", settings = "Asetukset", language = "Kieli", close = "Sulje", sound = "Kuoleman Ääni", upload = "Lataa Mukautettu Ääni", upload_error = "Virheellinen tiedosto! Käytä MP3/WAV, enintään 5MB.", killed_by = "%s tappoi sinut aseella %s (%s)" } },
+        { code = "cs", name = "Čeština", translations = { wasted = "ZABIT", respawn = "Obnovení za %d sekund", press = "Stiskni [MEZERNÍK] pro obnovení", settings = "Nastavení", language = "Jazyk", close = "Zavřít", sound = "Zvuk Smrti", upload = "Nahrát Vlastní Zvuk", upload_error = "Neplatný soubor! Použij MP3/WAV, max. 5MB.", killed_by = "Zabit hráčem %s zbraní %s (%s)" } },
+        { code = "hu", name = "Magyar", translations = { wasted = "MEGÖLVE", respawn = "Újraéledés %d másodperc múlva", press = "Nyomd meg a [SZÓKÖZ] gombot az újraéledéshez", settings = "Beállítások", language = "Nyelv", close = "Bezárás", sound = "Halál Hang", upload = "Egyéni Hang Feltöltése", upload_error = "Érvénytelen fájl! Használj MP3/WAV formátumot, max. 5MB.", killed_by = "%s ölte meg %s fegyverrel (%s)" } }
     }
 }
 
@@ -73,7 +75,10 @@ local state = {
     selectedLanguage = GetConVarString("seanie_deathscreen_language"),
     selectedSound = CONFIG.sounds.default_death,
     customSound = nil,
-    settingsOpen = false
+    settingsOpen = false,
+    killerName = "Unknown",
+    killWeapon = "Unknown",
+    killType = "Unknown"
 }
 
 -- Create fonts
@@ -97,11 +102,7 @@ end
 
 -- Get translation for current language, fallback to English
 local function GetTranslation(key)
-    local code = state.selectedLanguage
-
-    if code == "default" then
-        code = GetConVarString("gmod_language")
-    end
+    local code = state.selectedLanguage == "default" and GetConVarString("gmod_language") or state.selectedLanguage
     for _, lang in ipairs(CONFIG.languages) do
         if lang.code == code then
             return lang.translations[key] or CONFIG.languages[1].translations[key]
@@ -113,11 +114,8 @@ end
 -- Validate uploaded sound file
 local function ValidateSoundFile(fileName, fileSize)
     if fileSize > CONFIG.sounds.max_file_size then return false end
-    local ext = string.lower(string.GetExtensionFromFilename(fileName))
-    for _, allowed in ipairs(CONFIG.sounds.allowed_extensions) do
-        if ext == allowed then return true end
-    end
-    return false
+    local ext = string.lower(string.GetExtensionFromFilename(fileName) or "")
+    return table.HasValue(CONFIG.sounds.allowed_extensions, ext)
 end
 
 -- Apply screen effects
@@ -139,7 +137,6 @@ hook.Add("RenderScreenspaceEffects", "DeathScreenEffects", function()
 
     DrawColorModify(colorMod)
     
-    -- Apply GTA-style blur
     surface.SetMaterial(blurMaterial)
     surface.SetDrawColor(255, 255, 255)
     for i = 1, 3 do
@@ -165,6 +162,18 @@ hook.Add("HUDPaint", "DrawDeathScreen", function()
         state.screenW / 2,
         state.screenH / 2 - 50,
         Color(CONFIG.colors.wasted.r, CONFIG.colors.wasted.g, CONFIG.colors.wasted.b, fadeAlpha),
+        TEXT_ALIGN_CENTER,
+        TEXT_ALIGN_CENTER
+    )
+
+    -- Draw kill information
+    local killMessage = string.format(GetTranslation("killed_by"), state.killerName, state.killWeapon, state.killType)
+    draw.SimpleText(
+        killMessage,
+        CONFIG.fonts.kill_info.name,
+        state.screenW / 2,
+        state.screenH / 2,
+        Color(CONFIG.colors.kill_info.r, CONFIG.colors.kill_info.g, CONFIG.colors.kill_info.b, fadeAlpha),
         TEXT_ALIGN_CENTER,
         TEXT_ALIGN_CENTER
     )
@@ -307,7 +316,7 @@ local function OpenSettings()
                 timer.Simple(1, function()
                     local tempFile = file.Read("gta_temp_sound.dat", "DATA")
                     if tempFile and tempFile ~= "" then
-                        local fileName = string.match(tempFile, "[^\\/]+$")
+                        local fileName = string.match(tempFile, "[^\\/]+$") or "unknown"
                         local fileSize = #tempFile
                         if ValidateSoundFile(fileName, fileSize) then
                             local soundPath = CONFIG.sounds.custom_upload_path .. LocalPlayer():SteamID64() .. "_" .. fileName
@@ -372,12 +381,15 @@ hook.Add("OnScreenSizeChanged", "DeathScreenUpdateResolution", function()
     state.screenW, state.screenH = ScrW(), ScrH()
 end)
 
--- Handle death notification
+-- Handle death notification with kill details
 net.Receive("deathscreen_sendDeath", function()
     state.isDead = true
     state.deathTime = CurTime()
     state.respawnAllowed = false
     state.settingsOpen = false
+    state.killerName = net.ReadString() or "Unknown"
+    state.killWeapon = net.ReadString() or "Unknown"
+    state.killType = net.ReadString() or "Unknown"
     if IsValid(settingsPanel) then settingsPanel:Remove() end
 end)
 
@@ -386,5 +398,8 @@ net.Receive("deathscreen_removeDeath", function()
     state.isDead = false
     state.respawnAllowed = false
     state.settingsOpen = false
+    state.killerName = "Unknown"
+    state.killWeapon = "Unknown"
+    state.killType = "Unknown"
     if IsValid(settingsPanel) then settingsPanel:Remove() end
 end)
