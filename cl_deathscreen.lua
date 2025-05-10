@@ -82,9 +82,6 @@ for _, font in pairs(CONFIG.fonts) do
     })
 end
 
--- Register network string for sound upload
-util.AddNetworkString("deathscreen_uploadSound")
-
 -- Load blur material
 local blurMaterial = Material("pp/blurscreen")
 
