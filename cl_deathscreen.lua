@@ -3,7 +3,7 @@ local CONFIG = {
     fonts = {
         title = { name = "gta_title", font = "Pricedown", size = 100, weight = 1000 },
         message = { name = "gta_message", font = "Arial", size = 28, weight = 700 },
-        settings = { name = "gta_settings", font = "Arial", size = 20, weight = 600 }
+        settings = { name = "gta_settings", font = "Arial", size = 24, weight = 600 }
     },
     colors = {
         wasted = Color(200, 0, 0, 255),
@@ -58,6 +58,12 @@ end
 -- Load blur material
 local blurMaterial = Material("pp/blurscreen")
 
+-- Check if mouse is within a rectangle
+local function IsMouseInBox(x, y, w, h)
+    local mx, my = gui.MousePos()
+    return mx >= x and mx <= x + w and my >= y and my <= y + h
+end
+
 -- Get translation for current language
 local function GetTranslation(key)
     for _, lang in ipairs(CONFIG.languages) do
@@ -87,7 +93,7 @@ hook.Add("RenderScreenspaceEffects", "DeathScreenEffects", function()
 
     DrawColorModify(colorMod)
     
-    -- Enhanced GTA-style blur
+    -- GTA-style blur
     surface.SetMaterial(blurMaterial)
     surface.SetDrawColor(255, 255, 255)
     for i = 1, 3 do
@@ -133,14 +139,14 @@ hook.Add("HUDPaint", "DrawDeathScreen", function()
         TEXT_ALIGN_CENTER
     )
 
-    -- Settings cog
+    -- Settings cog (visible in bottom-right)
     if not state.settingsOpen then
         draw.SimpleText(
             "⚙",
             CONFIG.fonts.settings.name,
-            state.screenW - 50,
-            state.screenH - 50,
-            input.IsMouseInBox(state.screenW - 70, state.screenH - 70, 40, 40) and CONFIG.colors.settings_hover or CONFIG.colors.settings,
+            state.screenW - 60,
+            state.screenH - 60,
+            IsMouseInBox(state.screenW - 80, state.screenH - 80, 60, 60) and CONFIG.colors.settings_hover or CONFIG.colors.settings,
             TEXT_ALIGN_CENTER,
             TEXT_ALIGN_CENTER
         )
@@ -158,6 +164,7 @@ local function OpenSettings()
     settingsPanel:SetPos(state.screenW * 0.7, state.screenH * 0.25)
     settingsPanel:MakePopup()
     settingsPanel.Paint = function(s, w, h)
+        -- GTA-style dark panel
         draw.RoundedBox(8, 0, 0, w, h, Color(20, 20, 20, 240))
         draw.SimpleText(GetTranslation("settings"), CONFIG.fonts.message.name, w / 2, 20, CONFIG.colors.message, TEXT_ALIGN_CENTER)
     end
@@ -190,14 +197,15 @@ local function OpenSettings()
     languageCombo.OnSelect = function(_, _, _, code)
         state.selectedLanguage = code
     end
-    languageCombo:SetValue(CONFIG.languages[1].name) -- Default to English
+    languageCombo:SetValue(CONFIG.languages[1].name)
 end
 
 -- Handle input
 hook.Add("Think", "DeathScreenInput", function()
     if state.isDead and not state.settingsOpen and input.IsMouseDown(MOUSE_LEFT) then
-        if input.IsMouseInBox(state.screenW - 70, state.screenH - 70, 40, 40) then
+        if IsMouseInBox(state.screenW - 80, state.screenH - 80, 60, 60) then
             OpenSettings()
+            surface.PlaySound("ui/buttonclick.wav")
         end
     end
 
