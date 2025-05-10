@@ -5,11 +5,11 @@ local CONFIG = {
         "deathscreen_removeDeath",
         "deathscreen_requestRespawn"
     },
-    respawn_delay = 6, -- Matches client-side for GTA realism
+    respawn_delay = 6, -- Matches client-side
     allow_bypass = function(ply)
         return ply:IsSuperAdmin() or ply:HasGodMode()
     end,
-    sound = "gta/wasted.mp3" -- GTA-style sound
+    sound = "gta/wasted.mp3"
 }
 
 -- Register network strings
